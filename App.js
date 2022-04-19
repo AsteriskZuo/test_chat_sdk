@@ -86,7 +86,7 @@ const App = () => {
             Read the docs to discover what to do next:
           </Section>
           <Button
-            title="test"
+            title="login"
             onPress={() => {
               let o = new ChatOptions({
                 autoLogin: false,
@@ -123,6 +123,19 @@ const App = () => {
                 })
                 .catch(() => {
                   console.log('error');
+                });
+            }}
+          />
+          <Button
+            title="logout"
+            onPress={() => {
+              ChatClient.getInstance()
+                .logout()
+                .then(() => {
+                  console.log('ClientScreen.logout: success');
+                })
+                .catch(reason => {
+                  console.log('ClientScreen.logout: fail: ', reason);
                 });
             }}
           />
