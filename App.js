@@ -16,6 +16,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {
+  ChatClient,
+  ChatOptions,
+  ChatMessageChatType,
+  ChatMessageStatus,
+  ChatMessage,
+  ChatMessageStatusCallback,
+} from 'react-native-chat-sdk';
 
 const App = () => {
   const title = 'AgoraChatQuickstart';
@@ -23,12 +31,74 @@ const App = () => {
   const [password, setPassword] = React.useState('');
   const [userId, setUserId] = React.useState('');
   const [content, setContent] = React.useState('');
-  const [groupId, setGroupId] = React.useState('');
   const [logText, setWarnText] = React.useState('Show log area');
 
-  const signIn = () => {
+  const login = () => {
     setWarnText(`username:${username},password:${password}`);
+    let listener = {
+      onTokenWillExpire() {
+        console.log('ClientScreen.onTokenWillExpire');
+      },
+      onTokenDidExpire() {
+        console.log('ClientScreen.onTokenDidExpire');
+      },
+      onConnected() {
+        console.log('ClientScreen.onConnected');
+      },
+      onDisconnected(errorCode) {
+        console.log('ClientScreen.onDisconnected: ', errorCode);
+      },
+    };
+    ChatClient.getInstance().removeAllConnectionListener();
+    ChatClient.getInstance().addConnectionListener(listener);
+    ChatClient.getInstance()
+      .login('asteriskhx1', 'qwer')
+      .then(() => {
+        console.log('ClientScreen.login: success');
+      })
+      .catch(reason => {
+        console.log('ClientScreen.login: fail', reason);
+      });
   };
+
+  const logout = () => {
+    ChatClient.getInstance()
+      .logout()
+      .then(() => {
+        console.log('ClientScreen.logout: success');
+      })
+      .catch(reason => {
+        console.log('ClientScreen.logout: fail', reason);
+      });
+  };
+
+  const sendmsg = () => {
+    let msg = ChatMessage.createTextMessage(
+      userId,
+      content,
+      ChatMessageChatType.PeerChat,
+    );
+    const callback = new (class {
+      onProgress(locaMsgId, progress) {
+        console.log(
+          'ConnectScreen.sendMessage.onProgress ',
+          locaMsgId,
+          progress,
+        );
+      }
+      onError(locaMsgId, error) {
+        console.log('ConnectScreen.sendMessage.onError ', locaMsgId, error);
+      }
+      onSuccess(message) {
+        console.log('ConnectScreen.sendMessage.onSuccess', message.localMsgId);
+      }
+    })();
+    ChatClient.getInstance()
+      .chatManager.sendMessage(msg, callback)
+      .then(() => console.log('send success'))
+      .catch(() => console.log('send failed'));
+  };
+
   return (
     <SafeAreaView>
       <View style={styles.titleContainer}>
@@ -54,14 +124,11 @@ const App = () => {
           />
         </View>
         <View style={styles.buttonCon}>
-          <Text style={styles.eachBtn} onPress={signIn}>
+          <Text style={styles.eachBtn} onPress={login}>
             SIGN IN
           </Text>
-          <Text style={styles.eachBtn} onPress={signIn}>
+          <Text style={styles.eachBtn} onPress={logout}>
             SIGN OUT
-          </Text>
-          <Text style={styles.eachBtn} onPress={signIn}>
-            SIGN UP
           </Text>
         </View>
         <View style={styles.inputCon}>
@@ -83,28 +150,8 @@ const App = () => {
           />
         </View>
         <View style={styles.buttonCon}>
-          <Text style={styles.btn2} onPress={signIn}>
+          <Text style={styles.btn2} onPress={sendmsg}>
             SEND TEXT
-          </Text>
-          <Text style={styles.btn2} onPress={signIn}>
-            SEND IMAGE
-          </Text>
-        </View>
-        <View style={styles.inputCon}>
-          <TextInput
-            multiline
-            style={styles.inputBox}
-            placeholder="Enter group id"
-            onChangeText={text => setGroupId(text)}
-            value={groupId}
-          />
-        </View>
-        <View style={styles.buttonCon}>
-          <Text style={styles.btn2} onPress={signIn}>
-            JOIN GROUP
-          </Text>
-          <Text style={styles.btn2} onPress={signIn}>
-            QUIT GROUP
           </Text>
         </View>
         <View>
@@ -177,4 +224,188 @@ const styles = StyleSheet.create({
   },
 });
 
+(function init() {
+  let o = new ChatOptions({
+    autoLogin: false,
+    appKey: 'easemob-demo#easeim',
+  });
+  ChatClient.getInstance()
+    .init(o)
+    .then(() => {
+      console.log('success');
+    })
+    .catch(() => {
+      console.log('error');
+    });
+})();
+
 export default App;
+
+// /**
+//  * Sample React Native App
+//  * https://github.com/facebook/react-native
+//  *
+//  * @format
+//  * @flow strict-local
+//  */
+
+// import React from 'react';
+// // import type {Node} from 'react';
+// import {
+//   SafeAreaView,
+//   ScrollView,
+//   StatusBar,
+//   StyleSheet,
+//   Text,
+//   useColorScheme,
+//   View,
+//   Button,
+// } from 'react-native';
+
+// import {
+//   Colors,
+//   DebugInstructions,
+//   Header,
+//   LearnMoreLinks,
+//   ReloadInstructions,
+// } from 'react-native/Libraries/NewAppScreen';
+// import {ChatClient, ChatOptions} from '@asteriskzuo/react-native-chat-sdk';
+
+// const Section = ({children, title}) => {
+//   const isDarkMode = useColorScheme() === 'dark';
+//   return (
+//     <View style={styles.sectionContainer}>
+//       <Text
+//         style={[
+//           styles.sectionTitle,
+//           {
+//             color: isDarkMode ? Colors.white : Colors.black,
+//           },
+//         ]}>
+//         {title}
+//       </Text>
+//       <Text
+//         style={[
+//           styles.sectionDescription,
+//           {
+//             color: isDarkMode ? Colors.light : Colors.dark,
+//           },
+//         ]}>
+//         {children}
+//       </Text>
+//     </View>
+//   );
+// };
+
+// const App = () => {
+//   const isDarkMode = useColorScheme() === 'dark';
+
+//   const backgroundStyle = {
+//     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+//   };
+
+//   return (
+//     <SafeAreaView style={backgroundStyle}>
+//       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+//       <ScrollView
+//         contentInsetAdjustmentBehavior="automatic"
+//         style={backgroundStyle}>
+//         <Header />
+//         <View
+//           style={{
+//             backgroundColor: isDarkMode ? Colors.black : Colors.white,
+//           }}>
+//           <Section title="Step One">
+//             Edit <Text style={styles.highlight}>App.js</Text> to change this
+//             screen and then come back to see your edits.
+//           </Section>
+//           <Section title="See Your Changes">
+//             <ReloadInstructions />
+//           </Section>
+//           <Section title="Debug">
+//             <DebugInstructions />
+//           </Section>
+//           <Section title="Learn More">
+//             Read the docs to discover what to do next:
+//           </Section>
+//           <Button
+//             title="login"
+//             onPress={() => {
+//               let o = new ChatOptions({
+//                 autoLogin: false,
+//                 appKey: 'easemob-demo#easeim',
+//               });
+//               ChatClient.getInstance()
+//                 .init(o)
+//                 .then(() => {
+//                   console.log('success');
+//                   let listener = {
+//                     onTokenWillExpire() {
+//                       console.log('ClientScreen.onTokenWillExpire');
+//                     },
+//                     onTokenDidExpire() {
+//                       console.log('ClientScreen.onTokenDidExpire');
+//                     },
+//                     onConnected() {
+//                       console.log('ClientScreen.onConnected');
+//                     },
+//                     onDisconnected(errorCode) {
+//                       console.log('ClientScreen.onDisconnected: ', errorCode);
+//                     },
+//                   };
+//                   ChatClient.getInstance().removeAllConnectionListener();
+//                   ChatClient.getInstance().addConnectionListener(listener);
+//                   ChatClient.getInstance()
+//                     .login('asteriskhx1', 'qwer')
+//                     .then(() => {
+//                       console.log('ClientScreen.login: success');
+//                     })
+//                     .catch(reason => {
+//                       console.log('ClientScreen.login: fail', reason);
+//                     });
+//                 })
+//                 .catch(() => {
+//                   console.log('error');
+//                 });
+//             }}
+//           />
+//           <Button
+//             title="logout"
+//             onPress={() => {
+//               ChatClient.getInstance()
+//                 .logout()
+//                 .then(() => {
+//                   console.log('ClientScreen.logout: success');
+//                 })
+//                 .catch(reason => {
+//                   console.log('ClientScreen.logout: fail: ', reason);
+//                 });
+//             }}
+//           />
+//           <LearnMoreLinks />
+//         </View>
+//       </ScrollView>
+//     </SafeAreaView>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   sectionContainer: {
+//     marginTop: 32,
+//     paddingHorizontal: 24,
+//   },
+//   sectionTitle: {
+//     fontSize: 24,
+//     fontWeight: '600',
+//   },
+//   sectionDescription: {
+//     marginTop: 8,
+//     fontSize: 18,
+//     fontWeight: '400',
+//   },
+//   highlight: {
+//     fontWeight: '700',
+//   },
+// });
+
+// export default App;
