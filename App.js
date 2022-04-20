@@ -20,9 +20,7 @@ import {
   ChatClient,
   ChatOptions,
   ChatMessageChatType,
-  ChatMessageStatus,
   ChatMessage,
-  ChatMessageStatusCallback,
 } from 'react-native-chat-sdk';
 
 const App = () => {
